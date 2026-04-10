@@ -1,0 +1,267 @@
+:root {
+  --ink: #17211c;
+  --muted: #637169;
+  --paper: #f4efe3;
+  --panel: #fffaf0;
+  --line: #d9cfbb;
+  --accent: #c15f32;
+  --accent-2: #1f6f63;
+  --shadow: 0 22px 60px rgba(38, 31, 20, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top right, rgba(193, 95, 50, 0.22), transparent 34rem),
+    linear-gradient(135deg, #efe4cf 0%, #f8f4eb 45%, #e6efe8 100%);
+  font-family: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+}
+
+code,
+input,
+select,
+button {
+  font-family: "JetBrains Mono", "Cascadia Code", monospace;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 72px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: stretch;
+  margin-bottom: 28px;
+}
+
+.hero,
+.panel,
+.document-card,
+.empty {
+  border: 1px solid rgba(23, 33, 28, 0.14);
+  border-radius: 32px;
+  background: rgba(255, 250, 240, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  padding: clamp(26px, 5vw, 72px);
+  overflow: hidden;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  right: -80px;
+  bottom: -90px;
+  border-radius: 50%;
+  border: 42px solid rgba(31, 111, 99, 0.16);
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-family: "JetBrains Mono", "Cascadia Code", monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 108px);
+  line-height: 0.94;
+  letter-spacing: -0.08em;
+  text-wrap: balance;
+}
+
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.hero-text,
+.panel-heading p,
+.summary,
+.doc-section p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.hero-card {
+  align-self: end;
+  min-height: 220px;
+  padding: 26px;
+  border-radius: 28px;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transform: rotate(-3deg);
+}
+
+.hero-card strong {
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.hero-card span {
+  color: #e2c0a1;
+  font-family: "JetBrains Mono", "Cascadia Code", monospace;
+  font-size: 13px;
+}
+
+.panel,
+.document-card,
+.empty {
+  padding: clamp(20px, 4vw, 42px);
+}
+
+.panel {
+  margin-bottom: 28px;
+}
+
+.generator-form,
+.review-form {
+  display: grid;
+  gap: 14px;
+}
+
+.generator-form {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: #fffdf8;
+  color: var(--ink);
+}
+
+button {
+  cursor: pointer;
+  background: var(--accent-2);
+  color: white;
+  border-color: var(--accent-2);
+  font-weight: 700;
+}
+
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.document-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.doc-topline,
+.review-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-family: "JetBrains Mono", "Cascadia Code", monospace;
+  font-size: 12px;
+}
+
+.status {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eadfc9;
+  color: var(--ink);
+}
+
+.status-reviewed,
+.status-published {
+  background: #d8eadf;
+  color: #17523d;
+}
+
+.status-rejected {
+  background: #f0d5cc;
+  color: #8a321d;
+}
+
+.doc-section {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+li {
+  margin-bottom: 9px;
+  line-height: 1.7;
+}
+
+details {
+  border: 1px dashed var(--line);
+  border-radius: 22px;
+  padding: 16px;
+}
+
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.context-item {
+  margin-top: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.context-item small {
+  color: var(--muted);
+  font-family: "JetBrains Mono", "Cascadia Code", monospace;
+}
+
+.empty.wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .generator-form,
+  .document-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card {
+    min-height: 180px;
+  }
+
+  .review-form {
+    flex-direction: column;
+  }
+}
+

@@ -1,0 +1,63 @@
+[
+  {
+    "id": "hist::ID-CONSISTENCY-2024",
+    "source_type": "history_rule",
+    "source_id": "R-HIST-001",
+    "title": "历史规则文档：身份证姓名一致性校验",
+    "content": "规则名称：身份证姓名一致性校验\n业务目标：识别客户姓名与身份证归属信息不一致的申请，降低冒名风险。\n触发时机：授信申请提交后、反欺诈规则组执行前。\n输入字段：customer.name、customer.id_no、identity.verify_result。\n输出字段：hit、decision、reason_code、reason_message。\n处理逻辑：当 identity.verify_result=MATCH 时通过；当结果为 NOT_MATCH 时拒绝；当结果为 UNKNOWN 或外部服务异常时进入人工复核。\n异常处理：外部核验服务超时 800ms 后读取当日缓存；无缓存则输出 MANUAL_REVIEW。\n测试建议：覆盖姓名中间脱敏、身份证末位 X、服务超时、缓存命中、核验不一致等场景。",
+    "metadata": {
+      "owner": "anti_fraud_team",
+      "version": "2024.11",
+      "status": "published"
+    }
+  },
+  {
+    "id": "hist::AGE-ACCESS-2023",
+    "source_type": "history_rule",
+    "source_id": "R-HIST-002",
+    "title": "历史规则文档：小微贷年龄准入",
+    "content": "规则名称：小微贷年龄准入\n业务目标：限定小微贷申请人的年龄范围，避免不符合产品政策的客群进件。\n输入字段：customer.age、application.product_code。\n规则逻辑：客户年龄小于 20 岁拒绝；客户年龄大于 60 岁拒绝；年龄为空时进入人工复核。\n输出规范：拒绝时 reason_code 固定输出 AGE_ACCESS_DENIED，日志中只记录年龄段，例如 20-25，不写身份证号。\n变更风险：年龄上下限调整会直接影响进件通过率，需要按产品分组灰度。",
+    "metadata": {
+      "owner": "credit_policy_team",
+      "version": "2023.08",
+      "status": "published"
+    }
+  },
+  {
+    "id": "hist::PHONE-VERIFY-2025",
+    "source_type": "history_rule",
+    "source_id": "R-HIST-003",
+    "title": "历史规则文档：手机号在网时长规则",
+    "content": "规则名称：手机号在网时长规则\n业务目标：识别刚开卡或异常手机账户，辅助判断欺诈风险。\n输入字段：customer.phone、operator.online_months、operator.query_status。\n规则逻辑：在网时长小于 3 个月且为新客时转人工复核；在网时长小于 1 个月时拒绝；查询失败时读取 24 小时缓存，缓存不存在则继续执行后续规则并写告警事件。\n脱敏要求：页面和日志只展示 phone_mask，不展示完整手机号。",
+    "metadata": {
+      "owner": "anti_fraud_team",
+      "version": "2025.03",
+      "status": "published"
+    }
+  },
+  {
+    "id": "hist::MULTI-LOAN-2025",
+    "source_type": "history_rule",
+    "source_id": "R-HIST-004",
+    "title": "历史规则文档：30日多头申请策略",
+    "content": "规则名称：30日多头申请策略\n业务目标：对 30 日内在多个机构频繁申请的客户做额度收缩或人工复核。\n输入字段：third_party.multi_loan_30d_count、third_party.multi_loan_query_status、application.amount。\n规则逻辑：查询成功且平台数大于等于 15 时拒绝；平台数在 10 到 14 之间时人工复核；申请金额大于 30000 时触发更严格阈值；第三方超时不直接拒绝，但需要标记 feature_status=DEGRADED。\n监控：统计命中率、拒绝率、超时率、缓存使用率。",
+    "metadata": {
+      "owner": "credit_policy_team",
+      "version": "2025.01",
+      "status": "published"
+    }
+  },
+  {
+    "id": "hist::RULE-DOC-TEMPLATE",
+    "source_type": "manual",
+    "source_id": "DOC-TEMPLATE-001",
+    "title": "规则说明文档编写规范",
+    "content": "规则文档必须包含：规则名称、规则编码、业务目标、触发时机、输入字段、输出字段、判断逻辑、伪代码、命中示例、未命中示例、异常和降级处理、依赖数据源、变更风险、测试点。业务逻辑要按步骤描述，不能只粘贴表达式。示例需要包含输入、期望输出和解释。涉及手机号、身份证、姓名、银行卡等敏感信息时，文档和日志示例必须脱敏。",
+    "metadata": {
+      "owner": "rule_engine_team",
+      "version": "1.0",
+      "status": "active"
+    }
+  }
+]
+

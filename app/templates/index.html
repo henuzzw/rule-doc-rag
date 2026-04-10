@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rule Doc RAG</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">RAG + LLM Rule Documentation</p>
+          <h1>规则文档自动生成工作台</h1>
+          <p class="hero-text">
+            从需求文档和历史规则文档中检索上下文，生成结构化单条规则说明；
+            当前 embedding={{ settings.embedding_mode }}，LLM={{ settings.llm_mode }}。
+          </p>
+        </div>
+        <div class="hero-card">
+          <strong>人工校验闭环</strong>
+          <span>draft → reviewed → published</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>生成规则文档</h2>
+          <p>先运行 seed 命令导入示例需求，再选择一个需求生成文档草稿。</p>
+        </div>
+        {% if requirements %}
+        <form class="generator-form" action="/ui/generate" method="post">
+          <label>
+            需求文档
+            <select name="requirement_id">
+              {% for requirement in requirements %}
+              <option value="{{ requirement.id }}">{{ requirement.id }} · {{ requirement.title }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            规则名称
+            <input name="rule_name" value="手机号三要素实名一致性校验" required />
+          </label>
+          <label>
+            规则编码
+            <input name="rule_code" value="RULE_PHONE_REALNAME" required />
+          </label>
+          <button type="submit">检索上下文并生成文档</button>
+        </form>
+        {% else %}
+        <div class="empty">
+          暂无需求数据。运行 <code>make init-db</code> 和 <code>make seed</code> 后刷新页面。
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="document-grid">
+        {% for document in documents %}
+        <article class="document-card">
+          <div class="doc-topline">
+            <span class="status status-{{ document.status }}">{{ document.status }}</span>
+            <span>{{ document.created_at[:19] }}</span>
+          </div>
+          <h2>{{ document.doc.rule_name }}</h2>
+          <p class="summary">{{ document.doc.document_summary }}</p>
+
+          <div class="doc-section">
+            <h3>业务目标</h3>
+            <p>{{ document.doc.business_goal }}</p>
+          </div>
+
+          <div class="doc-section">
+            <h3>判断逻辑</h3>
+            <ol>
+              {% for item in document.doc.decision_logic %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ol>
+          </div>
+
+          <div class="doc-section">
+            <h3>测试点</h3>
+            <ul>
+              {% for item in document.doc.test_points %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <details>
+            <summary>查看 RAG 上下文</summary>
+            {% for context in document.retrieved_context %}
+            <div class="context-item">
+              <b>{{ context.title }}</b>
+              <small>score={{ "%.4f"|format(context.score) }} · {{ context.source_type }}</small>
+            </div>
+            {% endfor %}
+          </details>
+
+          <form class="review-form" action="/ui/documents/{{ document.id }}/review" method="post">
+            <select name="status">
+              <option value="reviewed">reviewed</option>
+              <option value="published">published</option>
+              <option value="rejected">rejected</option>
+              <option value="draft">draft</option>
+            </select>
+            <input name="reviewer_notes" value="{{ document.reviewer_notes }}" placeholder="人工校验备注" />
+            <button type="submit">保存校验</button>
+          </form>
+        </article>
+        {% else %}
+        <div class="empty wide">还没有生成文档。选择一个需求并点击生成。</div>
+        {% endfor %}
+      </section>
+    </main>
+  </body>
+</html>
+

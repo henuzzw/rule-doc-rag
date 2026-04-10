@@ -1,0 +1,2 @@
+"""Rule document RAG application."""
+

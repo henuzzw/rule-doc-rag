@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rule-doc-rag-postgres
+    environment:
+      POSTGRES_DB: rule_doc
+      POSTGRES_USER: rule_doc
+      POSTGRES_PASSWORD: rule_doc
+    ports:
+      - "5432:5432"
+    volumes:
+      - rule-doc-rag-pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rule_doc -d rule_doc"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  rule-doc-rag-pgdata:
+

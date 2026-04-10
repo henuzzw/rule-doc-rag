@@ -1,0 +1,21 @@
+[
+  {
+    "id": "REQ-CREDIT-AGE-001",
+    "title": "现金贷进件年龄准入规则",
+    "business_background": "降低未成年人、超龄客户等非目标客群进入授信链路的概率，减少无效审核和合规风险。",
+    "source_text": "规则目标：申请人年龄不符合准入范围时拒绝进件。\n适用产品：现金贷 A、循环额度 B。\n入参字段：customer.age、customer.id_no、application.product_code、application.apply_time。\n规则逻辑：\n- 当 customer.age 为空，规则返回人工复核，reason_code=AGE_MISSING。\n- 当 customer.age < 22，直接拒绝，reason_code=AGE_TOO_YOUNG。\n- 当 customer.age > 55，直接拒绝，reason_code=AGE_TOO_OLD。\n- 当 22 <= customer.age <= 55，规则不命中，继续后续规则。\n审计要求：规则日志只允许记录年龄区间，不允许输出完整身份证号。"
+  },
+  {
+    "id": "REQ-FRAUD-PHONE-REALNAME-002",
+    "title": "手机号三要素实名一致性校验",
+    "business_background": "在授信前识别手机号、身份证、姓名不一致的申请，降低冒名申请和资料盗用风险。",
+    "source_text": "规则目标：基于运营商三要素核验结果判断客户实名一致性。\n入参字段：customer.name、customer.id_no、customer.phone、operator.verify_result、operator.verify_time、application.channel。\n规则逻辑：\n- 当 operator.verify_result = MATCH，规则通过。\n- 当 operator.verify_result = NOT_MATCH，规则命中并拒绝，reason_code=PHONE_REALNAME_NOT_MATCH。\n- 当 operator.verify_result = NO_RECORD 且 application.channel 为新客渠道，进入人工复核。\n- 当运营商接口超时，读取 24 小时内缓存；缓存不存在时按人工复核处理。\n合规要求：手机号、姓名、身份证号必须脱敏展示。"
+  },
+  {
+    "id": "REQ-CREDIT-MULTI-LOAN-003",
+    "title": "7日内多头借贷申请预警",
+    "business_background": "识别短时间内在多个平台频繁申请借款的客户，控制共债和欺诈团伙风险。",
+    "source_text": "规则目标：统计客户近 7 日在合作数据源中的借贷申请平台数，并对高风险客户拦截或复核。\n入参字段：customer.id_no_hash、customer.phone_hash、third_party.multi_loan_7d_count、third_party.multi_loan_query_status、application.amount。\n规则逻辑：\n- 当 third_party.multi_loan_query_status = SUCCESS 且 third_party.multi_loan_7d_count >= 8，直接拒绝，reason_code=MULTI_LOAN_HIGH。\n- 当 third_party.multi_loan_query_status = SUCCESS 且 5 <= third_party.multi_loan_7d_count < 8，转人工复核。\n- 当 third_party.multi_loan_query_status = TIMEOUT，使用 6 小时内缓存；缓存也不存在时不拒绝，但输出告警事件。\n- 当申请金额 application.amount >= 20000 时，阈值下调 1 个平台。\n监控指标：多头规则命中率、复核通过率、三方查询超时率。"
+  }
+]
+
