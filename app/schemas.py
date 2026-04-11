@@ -26,6 +26,42 @@ class RetrievedContext(KnowledgeChunk):
     score: float
 
 
+class BadCase(BaseModel):
+    id: str
+    rule_code: str
+    rule_name: str
+    title: str
+    bad_summary: str
+    failure_reason: str
+    corrected_hint: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class RetrievedBadCase(BadCase):
+    score: float
+
+
+class BadCaseCreate(BaseModel):
+    id: str | None = None
+    rule_code: str
+    rule_name: str
+    title: str
+    bad_summary: str
+    failure_reason: str
+    corrected_hint: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class BadCaseUpdate(BaseModel):
+    rule_code: str | None = None
+    rule_name: str | None = None
+    title: str | None = None
+    bad_summary: str | None = None
+    failure_reason: str | None = None
+    corrected_hint: str | None = None
+    metadata: dict[str, Any] | None = None
+
+
 class RuleExample(BaseModel):
     title: str
     input: dict[str, Any]

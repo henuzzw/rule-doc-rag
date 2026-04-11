@@ -9,7 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.db import db_session  # noqa: E402
 from app.repository import Repository  # noqa: E402
-from app.schemas import KnowledgeChunk, Requirement  # noqa: E402
+from app.schemas import BadCase, KnowledgeChunk, Requirement  # noqa: E402
 from app.services.embedding import build_embedding_service  # noqa: E402
 
 
@@ -17,6 +17,7 @@ def main() -> None:
     embedder = build_embedding_service()
     requirements = _read_json("requirements.json")
     history_rules = _read_json("history_rules.json")
+    bad_cases = _read_json("bad_cases.json")
 
     with db_session() as conn:
         repository = Repository(conn)
@@ -47,15 +48,34 @@ def main() -> None:
             chunk = KnowledgeChunk.model_validate(item)
             _upsert_chunk(repository, embedder, chunk)
 
+        for item in bad_cases:
+            bad_case = BadCase.model_validate(item)
+            _upsert_bad_case(repository, embedder, bad_case)
+
     print(
         f"seed completed: {len(requirements)} requirements, "
-        f"{len(history_rules)} historical rule documents"
+        f"{len(history_rules)} historical rule documents, "
+        f"{len(bad_cases)} bad cases"
     )
 
 
 def _upsert_chunk(repository, embedder, chunk: KnowledgeChunk) -> None:
     embedding = embedder.embed_text(f"{chunk.title}\n{chunk.content}")
     repository.upsert_knowledge_chunk(chunk, embedding)
+
+
+def _upsert_bad_case(repository, embedder, bad_case: BadCase) -> None:
+    embedding = embedder.embed_text(
+        "\n".join(
+            [
+                bad_case.title,
+                bad_case.bad_summary,
+                bad_case.failure_reason,
+                bad_case.corrected_hint,
+            ]
+        )
+    )
+    repository.upsert_bad_case(bad_case, embedding)
 
 
 def _read_json(filename: str):

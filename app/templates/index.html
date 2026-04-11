@@ -13,7 +13,7 @@
           <p class="eyebrow">RAG + LLM Rule Documentation</p>
           <h1>规则文档自动生成工作台</h1>
           <p class="hero-text">
-            从需求文档和历史规则文档中检索上下文，生成结构化单条规则说明；
+            从需求文档和历史规则文档中检索上下文，生成结构化单条规则说明。
             当前 embedding={{ settings.embedding_mode }}，LLM={{ settings.llm_mode }}。
           </p>
         </div>
@@ -113,7 +113,113 @@
         <div class="empty wide">还没有生成文档。选择一个需求并点击生成。</div>
         {% endfor %}
       </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Bad Case 管理</h2>
+          <p>手工维护坏案例，或从审核回流中自动沉淀，供后续生成时作为反例约束。</p>
+        </div>
+
+        <form class="badcase-form" action="/ui/bad-cases" method="post">
+          <label>
+            规则编码
+            <input name="rule_code" placeholder="RULE_PHONE_REALNAME" required />
+          </label>
+          <label>
+            规则名称
+            <input name="rule_name" placeholder="手机号三要素实名一致性校验" required />
+          </label>
+          <label class="wide-field">
+            标题
+            <input name="title" placeholder="把超时当通过" required />
+          </label>
+          <label class="wide-field">
+            错误摘要
+            <textarea name="bad_summary" rows="3" placeholder="生成结果哪里错了" required></textarea>
+          </label>
+          <label class="wide-field">
+            失败原因
+            <textarea name="failure_reason" rows="3" placeholder="为什么这是错误" required></textarea>
+          </label>
+          <label class="wide-field">
+            修正提示
+            <textarea name="corrected_hint" rows="3" placeholder="应该怎么改"></textarea>
+          </label>
+          <label class="wide-field">
+            额外元数据 JSON
+            <textarea name="metadata_json" rows="3" placeholder='{"severity":"high","source":"manual"}'>{}</textarea>
+          </label>
+          <button type="submit">新增 bad case</button>
+        </form>
+      </section>
+
+      <section class="document-grid">
+        {% for bad_case in bad_cases %}
+        <article class="document-card">
+          <div class="doc-topline">
+            <span class="status">bad case</span>
+            <span>{{ bad_case.rule_code }}</span>
+          </div>
+          <h2>{{ bad_case.title }}</h2>
+          <p class="summary">{{ bad_case.bad_summary }}</p>
+
+          <div class="doc-section">
+            <h3>失败原因</h3>
+            <p>{{ bad_case.failure_reason }}</p>
+          </div>
+
+          <div class="doc-section">
+            <h3>修正提示</h3>
+            <p>{{ bad_case.corrected_hint }}</p>
+          </div>
+
+          <details>
+            <summary>查看元数据</summary>
+            <pre>{{ bad_case.metadata | tojson(indent=2) }}</pre>
+          </details>
+
+          <form class="badcase-edit-form" action="/ui/bad-cases/{{ bad_case.id }}/update" method="post">
+            <label>
+              规则编码
+              <input name="rule_code" value="{{ bad_case.rule_code }}" required />
+            </label>
+            <label>
+              规则名称
+              <input name="rule_name" value="{{ bad_case.rule_name }}" required />
+            </label>
+            <label>
+              标题
+              <input name="title" value="{{ bad_case.title }}" required />
+            </label>
+            <label>
+              错误摘要
+              <textarea name="bad_summary" rows="3" required>{{ bad_case.bad_summary }}</textarea>
+            </label>
+            <label>
+              失败原因
+              <textarea name="failure_reason" rows="3" required>{{ bad_case.failure_reason }}</textarea>
+            </label>
+            <label>
+              修正提示
+              <textarea name="corrected_hint" rows="3">{{ bad_case.corrected_hint }}</textarea>
+            </label>
+            <label>
+              额外元数据 JSON
+              <textarea name="metadata_json" rows="3">{{ bad_case.metadata | tojson }}</textarea>
+            </label>
+            <div class="row-actions">
+              <button type="submit">保存</button>
+            </div>
+          </form>
+
+          <form class="badcase-delete-form" action="/ui/bad-cases/{{ bad_case.id }}/delete" method="post">
+            <button type="submit" class="danger">删除</button>
+          </form>
+        </article>
+        {% else %}
+        <div class="empty wide">暂无 bad case，先从审核回流或手工新增。</div>
+        {% endfor %}
+      </section>
     </main>
   </body>
 </html>
-

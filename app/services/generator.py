@@ -6,7 +6,12 @@ from dataclasses import dataclass
 
 from pydantic import ValidationError
 
-from app.schemas import Requirement, RetrievedContext, RuleDocumentContent
+from app.schemas import (
+    Requirement,
+    RetrievedBadCase,
+    RetrievedContext,
+    RuleDocumentContent,
+)
 from app.services.llm import LLMClient
 
 
@@ -26,12 +31,14 @@ class RuleDocumentGenerator:
         *,
         requirement: Requirement,
         contexts: list[RetrievedContext],
+        bad_cases: list[RetrievedBadCase],
         rule_name: str,
         rule_code: str,
     ) -> GenerationResult:
         prompt = build_prompt(
             requirement=requirement,
             contexts=contexts,
+            bad_cases=bad_cases,
             rule_name=rule_name,
             rule_code=rule_code,
         )
@@ -40,6 +47,7 @@ class RuleDocumentGenerator:
             generation_hint={
                 "requirement": requirement.model_dump(mode="json"),
                 "contexts": [item.model_dump(mode="json") for item in contexts],
+                "bad_cases": [item.model_dump(mode="json") for item in bad_cases],
                 "rule_name": rule_name,
                 "rule_code": rule_code,
             },
@@ -55,10 +63,12 @@ def build_prompt(
     *,
     requirement: Requirement,
     contexts: list[RetrievedContext],
+    bad_cases: list[RetrievedBadCase],
     rule_name: str,
     rule_code: str,
 ) -> str:
     context_block = _format_contexts(contexts)
+    bad_case_block = _format_bad_cases(bad_cases)
     schema_json = json.dumps(
         RuleDocumentContent.model_json_schema(),
         ensure_ascii=False,
@@ -78,6 +88,10 @@ def build_prompt(
 
 RAG 检索到的上下文：
 {context_block}
+
+历史 bad case / 反例约束：
+- 这些案例代表历史错误或审核否决模式，只能作为反例参考，生成时必须规避。
+{bad_case_block}
 
 输出要求：
 1. 只输出 JSON，不要输出 Markdown、解释文本或代码块。
@@ -119,6 +133,29 @@ content:
     return "\n\n".join(blocks)
 
 
+def _format_bad_cases(bad_cases: list[RetrievedBadCase]) -> str:
+    if not bad_cases:
+        return "未检索到 bad case，请继续按当前需求和上下文制作规则。"
+
+    blocks = []
+    for index, item in enumerate(bad_cases, start=1):
+        blocks.append(
+            f"""[badcase-{index}]
+rule_code: {item.rule_code}
+rule_name: {item.rule_name}
+title: {item.title}
+score: {item.score:.4f}
+metadata: {json.dumps(item.metadata, ensure_ascii=False)}
+bad_summary:
+{item.bad_summary[:900]}
+failure_reason:
+{item.failure_reason[:900]}
+corrected_hint:
+{item.corrected_hint[:900]}"""
+        )
+    return "\n\n".join(blocks)
+
+
 def _extract_json(raw_response: str) -> str:
     text = raw_response.strip()
     fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, flags=re.S)
@@ -130,4 +167,3 @@ def _extract_json(raw_response: str) -> str:
     if start >= 0 and end > start:
         return text[start : end + 1]
     return text
-

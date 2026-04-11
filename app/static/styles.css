@@ -154,6 +154,7 @@ label {
 
 input,
 select,
+textarea,
 button {
   width: 100%;
   border: 1px solid var(--line);
@@ -169,6 +170,11 @@ button {
   color: white;
   border-color: var(--accent-2);
   font-weight: 700;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 92px;
 }
 
 .document-grid {
@@ -249,9 +255,45 @@ summary {
   grid-column: 1 / -1;
 }
 
+.badcase-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.badcase-form .wide-field,
+.badcase-edit-form {
+  grid-column: 1 / -1;
+}
+
+.badcase-edit-form,
+.badcase-delete-form {
+  display: grid;
+  gap: 14px;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+button.danger {
+  background: #8a321d;
+  border-color: #8a321d;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "JetBrains Mono", "Cascadia Code", monospace;
+  color: var(--muted);
+}
+
 @media (max-width: 860px) {
   .hero,
   .generator-form,
+  .badcase-form,
   .document-grid {
     grid-template-columns: 1fr;
   }

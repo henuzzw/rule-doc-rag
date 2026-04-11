@@ -1,16 +1,20 @@
 import json
 import math
 
-from app.schemas import Requirement, RetrievedContext
+from app.schemas import Requirement, RetrievedBadCase, RetrievedContext
 from app.services.embedding import HashEmbeddingService
-from app.services.generator import RuleDocumentGenerator, parse_rule_document
+from app.services.generator import (
+    RuleDocumentGenerator,
+    build_prompt,
+    parse_rule_document,
+)
 from app.services.llm import MockLLMClient
 
 
 def test_hash_embedding_has_expected_dimension_and_is_normalized():
     service = HashEmbeddingService(dimension=64)
 
-    vector = service.embed_text("手机号 三要素 customer.phone customer.id_no")
+    vector = service.embed_text("手机号三要素 customer.phone customer.id_no")
 
     assert len(vector) == 64
     assert math.isclose(
@@ -53,6 +57,47 @@ def test_parse_rule_document_accepts_json_fence():
     assert document.examples[0].expected_output["hit"] is True
 
 
+def test_build_prompt_includes_bad_cases():
+    requirement = Requirement(
+        id="REQ-1",
+        title="示例需求",
+        business_background="用于验证 bad case 是否进入 prompt",
+        source_text="规则目标：示例。",
+    )
+    context = RetrievedContext(
+        id="ctx-1",
+        source_type="history_rule",
+        source_id="H-1",
+        title="历史规则",
+        content="历史内容",
+        metadata={},
+        score=0.91,
+    )
+    bad_case = RetrievedBadCase(
+        id="bad-1",
+        rule_code="RULE_X",
+        rule_name="示例规则",
+        title="把超时当通过",
+        bad_summary="超时后直接放行。",
+        failure_reason="放大风险。",
+        corrected_hint="应转人工复核。",
+        metadata={"severity": "high"},
+        score=0.88,
+    )
+
+    prompt = build_prompt(
+        requirement=requirement,
+        contexts=[context],
+        bad_cases=[bad_case],
+        rule_name="示例规则",
+        rule_code="RULE_X",
+    )
+
+    assert "反例约束" in prompt
+    assert "把超时当通过" in prompt
+    assert "应转人工复核" in prompt
+
+
 def test_mock_generator_uses_requirement_and_context():
     generator = RuleDocumentGenerator(MockLLMClient())
     requirement = Requirement(
@@ -73,10 +118,22 @@ def test_mock_generator_uses_requirement_and_context():
         metadata={},
         score=0.91,
     )
+    bad_case = RetrievedBadCase(
+        id="bad-1",
+        rule_code="RULE_PHONE_REALNAME",
+        rule_name="手机号三要素实名一致性校验",
+        title="超时直接通过",
+        bad_summary="运营商超时后放行。",
+        failure_reason="违背兜底策略。",
+        corrected_hint="应进入人工复核。",
+        metadata={},
+        score=0.82,
+    )
 
     result = generator.generate(
         requirement=requirement,
         contexts=[context],
+        bad_cases=[bad_case],
         rule_name="手机号三要素实名一致性校验",
         rule_code="RULE_PHONE_REALNAME",
     )
@@ -85,4 +142,3 @@ def test_mock_generator_uses_requirement_and_context():
     assert as_json["rule_code"] == "RULE_PHONE_REALNAME"
     assert "operator.verify_result" in result.doc.input_fields
     assert "历史规则文档：身份证姓名一致性校验" in result.doc.dependencies
-

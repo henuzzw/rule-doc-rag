@@ -1,0 +1,44 @@
+[
+  {
+    "id": "bad::PHONE-REALNAME-TIMEOUT-PASS",
+    "rule_code": "RULE_PHONE_REALNAME",
+    "rule_name": "手机号三要素实名一致性校验",
+    "title": "把运营商超时直接写成通过",
+    "bad_summary": "历史生成版本在运营商查询超时时，将 operator.verify_result = TIMEOUT 直接映射为 PASS，没有进入人工复核。",
+    "failure_reason": "超时代表不确定状态，直接放行会放大欺诈风险，也与规则兜底策略冲突。",
+    "corrected_hint": "应先读取缓存；缓存缺失时进入人工复核，并在 reason_code 中记录降级原因。",
+    "metadata": {
+      "severity": "high",
+      "bad_type": "logic_gap",
+      "status": "active"
+    }
+  },
+  {
+    "id": "bad::AGE-ACCESS-INVERTED-THRESHOLD",
+    "rule_code": "RULE_AGE_ACCESS",
+    "rule_name": "年龄准入校验",
+    "title": "年龄阈值方向写反",
+    "bad_summary": "某次生成把“22岁以下拒绝、55岁以上拒绝”错误写成了“22岁以上拒绝、55岁以下通过”，导致逻辑反转。",
+    "failure_reason": "阈值方向错误会直接造成全量误判，是最危险的规则逻辑错误之一。",
+    "corrected_hint": "生成时必须把阈值条件拆成显式命中/未命中两支，并用例子验证边界值。",
+    "metadata": {
+      "severity": "critical",
+      "bad_type": "threshold_error",
+      "status": "active"
+    }
+  },
+  {
+    "id": "bad::MULTI-LOAN-HALLUCINATED-FIELD",
+    "rule_code": "RULE_MULTI_LOAN_7D",
+    "rule_name": "7日内多头借贷预警",
+    "title": "幻觉出不存在的字段",
+    "bad_summary": "历史文档中生成了 application.channel_status 这样的字段，但需求和上下文里并不存在该字段。",
+    "failure_reason": "幻觉字段会导致文档无法落地，也会误导后续研发和测试。",
+    "corrected_hint": "只允许使用需求正文和检索上下文中出现过的字段；不确定时显式标注“推断”。",
+    "metadata": {
+      "severity": "high",
+      "bad_type": "hallucination",
+      "status": "active"
+    }
+  }
+]

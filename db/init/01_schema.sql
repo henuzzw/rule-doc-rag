@@ -25,6 +25,25 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_source
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_embedding_hnsw
   ON knowledge_chunks USING hnsw (embedding vector_cosine_ops);
 
+CREATE TABLE IF NOT EXISTS bad_cases (
+  id TEXT PRIMARY KEY,
+  rule_code TEXT NOT NULL,
+  rule_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  bad_summary TEXT NOT NULL,
+  failure_reason TEXT NOT NULL,
+  corrected_hint TEXT NOT NULL DEFAULT '',
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  embedding VECTOR(1024) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_bad_cases_rule_code
+  ON bad_cases (rule_code, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_bad_cases_embedding_hnsw
+  ON bad_cases USING hnsw (embedding vector_cosine_ops);
+
 CREATE TABLE IF NOT EXISTS generated_documents (
   id TEXT PRIMARY KEY,
   rule_code TEXT NOT NULL,
